@@ -9,12 +9,36 @@ export const typeDef = gql`
 
   type Dataset {
     title: String
+    type: DatasetType
+    publishingOrganizationKey: String!
+    organization: Organization
+    taxonomicCoverages: [TaxonomicCoverage]
+    contacts: [Contact]
+    identifiers: [Identifier]
+    endpoints: [Endpoint]
+    machineTags: [MachineTag]
+    tags: [Tag]
   }
 
   type DatasetBreakdown {
     count: Int
     name: String
     dataset: Dataset
+  }
+
+  type TaxonomicCoverage {
+    description: String
+    coverages: [TaxonCoverage]
+  }
+
+  type TaxonCoverage {
+    scientificName: String
+    rank: TaxonCoverageRank
+  }
+
+  type TaxonCoverageRank {
+    verbatim: String
+    interpreted: String
   }
 `;
 
@@ -23,6 +47,9 @@ export const datasetByKey = key => request.get(`${gbifApi}/dataset/${key}`).then
 export const resolvers = {
   Query: {
     dataset: (parent, {key}) => datasetByKey(key)
+  },
+  Dataset: {
+    organization: ({publishingOrganizationKey}, params, {loaders}) => loaders.organizationByKey.load(publishingOrganizationKey),
   },
   DatasetBreakdown: {
     dataset: ({name}) => datasetByKey(name)

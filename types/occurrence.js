@@ -1,13 +1,12 @@
 import { gql } from 'apollo-server'
-import request from '../request'
 import queryString from 'query-string'
 import { gbifApi } from '../config'
-
-import {taxonByKey} from './taxon'
+import request from '../request'
 
 export const typeDef = gql`
   extend type Query {
-    occurrences(limit: Int, q: String, taxonKey: Int): OccurrenceResult
+    occurrenceList(limit: Int, q: String, taxonKey: Int, basisOfRecord: [BasisOfRecord]): OccurrenceResult
+    occurrence(key: String!): Occurrence
   }
 
   type Occurrence {
@@ -65,9 +64,10 @@ export const getOccurrenceFacet = (facetKey) =>
 
 export const resolvers = {
   Query: {
-    occurrences: (parent, params, context={}) => {
+    occurrenceList: (parent, params, context={}) => {
       return occurrenceSearch(params)
-    }
+    },
+    occurrence: (parent, {key}) => occurrenceByKey(key),
   },
   Occurrence: {
     taxon: ({taxonKey}, params, {loaders}) => {

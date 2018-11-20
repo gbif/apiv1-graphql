@@ -8,7 +8,7 @@ const agentMapping = [
 
 function requestWrapper(options) {
   const path = url.parse(options.url).path;
-  console.log(path);
+  // console.log(path);
   let match = agentMapping.find(function(e) {
     if (e.startsWith) {
       return path.startsWith(e.startsWith);
