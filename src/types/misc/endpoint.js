@@ -2,7 +2,7 @@ import { gql } from 'apollo-server'
 
 export const typeDef = gql`
   type Endpoint {
-    key: Int!
+    key: ID!
     type: String!
     identifier: String
     url: URL
