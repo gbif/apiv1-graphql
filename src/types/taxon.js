@@ -7,8 +7,22 @@ import { occurrenceSearch } from './occurrence'
 
 export const typeDef = gql`
   extend type Query {
-    taxonList(limit: Int, q: String, datasetKey: String, rank: String): TaxonSearchResult
+    taxonList(  limit: Int, 
+                offset: Int,
+                q: String, 
+                datasetKey: [ID], 
+                rank: [Rank], 
+                highertaxonKey: [Int], 
+                status: [TaxonomicStatus], 
+                isExtinct: Boolean, 
+                habitat: [Habitat], 
+                nameType: [NameType], 
+                nomenclaturalStatus: [NomenclaturalStatus], 
+                issue: [NameUsageIssue], 
+                hl: String
+              ): TaxonSearchResult
     taxon(key: Int!): Taxon
+    checklistRoots(key: ID!): TaxonListResult
   }
 
   type TaxonSearchResult {
@@ -22,47 +36,53 @@ export const typeDef = gql`
     results: [Taxon]!
     limit: Int!
     offset: Int!
+    endOfRecords: Boolean!
   }
 
   type Taxon {
     key: Int!
+    nubKey: Int
+
+    kingdom: String
+    phylum: String
+    class: String
+    order: String
+    family: String
+    genus: String
+    species: String
+    kingdomKey: Int
+    phylumKey: Int
+    classKey: Int
+    orderKey: Int
+    familyKey: Int
+    genusKey: Int
+    speciesKey: Int
+
     accepted: String
     acceptedKey: Int
     authorship: String
     canonicalName: String
-    class: String
-    classKey: Int
     constituentKey: ID
     constituent: Dataset
     constituentTitle: String
     datasetKey: ID
     dataset: Dataset
     datasetTitle: String!
-    genus: String
-    genusKey: Int
     issues: [String]
-    kingdom: String
-    kingdomKey: Int
+
     lastCrawled: String
     lastInterpreted: String
     nameKey: Int
     nameType: NameType
     nomenclaturalStatus: [NomenclaturalStatus]
-    nubKey: Int
     numDescendants: Int
-    order: String
-    orderKey: Int
     origin: Origin
     parent: String
     parentKey: Int
-    phylum: String
-    phylumKey: Int
     rank: Rank
     remarks: String
     scientificName: String
     sourceTaxonKey: Int
-    species: String
-    speciesKey: Int
     synonym: Boolean
     taxonID: String
     taxonomicStatus: String
@@ -71,10 +91,6 @@ export const typeDef = gql`
     The scientific name  as HTML
     """
     formatedName: String!
-    children: TaxonListResult
-    parents: [Taxon]
-    related: TaxonListResult
-    synonyms: TaxonListResult
   }
 
   type TaxonBreakdown {
@@ -88,7 +104,8 @@ export const typeDef = gql`
 export const resolvers = {
   Query: {
     taxon: (parent, {key}, {loaders}) => loaders.taxonByKey.load(key),
-    taxonList: (parent, params, context={}) => taxonSearch(params)
+    taxonList: (parent, params, context={}) => taxonSearch(params),
+    checklistRoots: (parent, {key, ...params}, context={}) => checklistRoots(key, params),
   },
   Taxon: {
     formatedName: ({key}, params, {loaders}) => loaders.formatedScientificNameByKey.load(key),
@@ -102,10 +119,6 @@ export const resolvers = {
       if (typeof constituentKey === 'undefined') return null;
       return loaders.datasetByKey.load(constituentKey).then(data => data.title)
     },
-    children: (parent, params, context={}) => taxonChildren(parent.key, params),
-    parents: (parent, params, context={}) => taxonParents(parent.key, params),
-    related: (parent, params, context={}) => taxonRelated(parent.key, params),
-    synonyms: (parent, params, context={}) => taxonSynonyms(parent.key, params),
   },
   TaxonBreakdown: {
     taxon: ({name}, params, {loaders}) => loaders.taxonByKey.load(name),
@@ -123,22 +136,7 @@ export const taxonSearch = (params) => {
   return request.get(url).then(res => ({...res.body, _query: params}))
 }
 
-export const taxonChildren = (key, params) => {
-  const url = `${gbifApi}/species/${key}/children?${queryString.stringify(params)}`;
-  return request.get(url).then(res => res.body)
-}
-
-export const taxonParents = (key, params) => {
-  const url = `${gbifApi}/species/${key}/parents?${queryString.stringify(params)}`;
-  return request.get(url).then(res => res.body)
-}
-
-export const taxonRelated = (key, params) => {
-  const url = `${gbifApi}/species/${key}/related?${queryString.stringify(params)}`;
-  return request.get(url).then(res => res.body)
-}
-
-export const taxonSynonyms = (key, params) => {
-  const url = `${gbifApi}/species/${key}/synonyms?${queryString.stringify(params)}`;
+export const checklistRoots = (key, params) => {
+  const url = `${gbifApi}/species/root/${key}?${queryString.stringify(params)}`;
   return request.get(url).then(res => res.body)
 }

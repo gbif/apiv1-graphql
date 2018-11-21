@@ -32,11 +32,11 @@ export const typeDef = gql`
   }
 
   type OccurrenceFacet {
-    kingdom: [TaxonBreakdown]
-    species: [TaxonBreakdown]
-    dataset: [DatasetBreakdown]
-    recordedBy: [facetCount]
-    country: [facetCount]
+    kingdom(limit: Int, offset: Int): [TaxonBreakdown]
+    species(limit: Int, offset: Int): [TaxonBreakdown]
+    dataset(limit: Int, offset: Int): [DatasetBreakdown]
+    recordedBy(limit: Int, offset: Int): [facetCount]
+    country(limit: Int, offset: Int): [facetCount]
   }
 `;
 
@@ -48,8 +48,8 @@ export const occurrenceSearch = (params) => {
 }
 
 export const getOccurrenceFacet = (facetKey) => 
-  (parent, params, context) => {
-    return occurrenceSearch({...parent._query, limit: 0, facet: facetKey})
+  (parent, {limit=10, offset=0}, context) => {
+    return occurrenceSearch({...parent._query, limit: 0, facet: facetKey, facetLimit: limit, facetOffset: offset})
       .then(data => (
         [
           ...data.facets[0].counts

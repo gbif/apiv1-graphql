@@ -8,6 +8,7 @@ import { batchFaker } from './request'
 import { typeDef as Occurrence, resolvers as occurrenceResolvers, occurrenceByKey } from './types/occurrence.js';
 import { typeDef as Dataset, resolvers as datasetResolvers, datasetByKey } from './types/dataset.js';
 import { typeDef as Taxon, resolvers as taxonResolvers, taxonByKey, formatedScientificNameByKey } from './types/taxon.js';
+import { typeDef as TaxonSubTypes, resolvers as taxonSubTypesResolvers } from './types/taxonSubTypes';
 import { typeDef as Organization, resolvers as organizationResolvers, organizationByKey } from './types/organization.js';
 import { typeDef as Contact } from './types/misc/contact';
 import { typeDef as Identifier } from './types/misc/identifier';
@@ -18,7 +19,6 @@ import { enumTypeDefs } from './types/enums';
 
 async function setupServer() {
   const enumsSchema = await enumTypeDefs();
-  console.log(typeof enumsSchema)
 
   const typeDefs = gql`
     scalar URL
@@ -48,8 +48,8 @@ async function setupServer() {
   })
 
   const server = new ApolloServer({
-    typeDefs: [typeDefs, Occurrence, Dataset, Taxon, Organization, Contact, Identifier, Endpoint, MachineTag, Tag],
-    resolvers: merge(resolvers, occurrenceResolvers, datasetResolvers, taxonResolvers, organizationResolvers),
+    typeDefs: [typeDefs, Occurrence, Dataset, Taxon, TaxonSubTypes, Organization, Contact, Identifier, Endpoint, MachineTag, Tag],
+    resolvers: merge(resolvers, occurrenceResolvers, datasetResolvers, taxonResolvers, taxonSubTypesResolvers, organizationResolvers),
     context: () => ({
       loaders: getLoaders()
     })
