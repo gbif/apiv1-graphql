@@ -5,3 +5,4 @@
 # Application specific
 node_modules/
 scripts/
+dist/
