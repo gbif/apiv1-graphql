@@ -10,12 +10,12 @@ The GBIF APIs in general are open to attacks in the sense that you can bombard i
 ## Usage
 Developed using Node v10.13.0
 
-For development
-> npm run serve
+For development `npm run serve`
 
-For prod
-> npm start
+For prod `npm start`
 
 Or if you need another port
-> npm run build
-> node dist/index.js --port=4000
+```
+npm run build
+node dist/index.js --port=4000
+```
