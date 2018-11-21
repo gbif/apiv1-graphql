@@ -30,6 +30,7 @@ export const typeDef = gql`
     limit: Int!
     offset: Int!
     count: Int!
+    facet: TaxonFacet
   }
 
   type TaxonListResult {
@@ -99,7 +100,39 @@ export const typeDef = gql`
     taxon: Taxon
     occurrences(limit: Int, facetLimit: Int): OccurrenceResult
   }
+
+  type TaxonFacet {
+    rank(limit: Int, offset: Int): [facetCount]
+  }
 `;
+
+
+export const taxonByKey = key => request.get(`${gbifApi}/species/${key}`).then((res) => res.body);
+export const formatedScientificNameByKey = key => request.get(`http://www.gbif.org/api/species/${key}/name`).then((res) => res.body.n);
+
+export const taxonSearch = (params) => {
+  const url = `${gbifApi}/species/search?${queryString.stringify(params)}`;
+  return request.get(url).then(res => ({...res.body, _query: params}))
+}
+
+export const getTaxonFacet = (facetKey) => 
+  (parent, {limit=10, offset=0}, context) => {
+    return taxonSearch({...parent._query, limit: 0, facet: facetKey, facetLimit: limit, facetOffset: offset})
+      .then(data => (
+        [
+          ...data.facets[0].counts
+            .map(
+              facet => ({...facet, _query: {...parent._query, [facetKey]: facet.name}})
+            )
+        ]
+      )
+    );
+  }
+
+export const checklistRoots = (key, params) => {
+  const url = `${gbifApi}/species/root/${key}?${queryString.stringify(params)}`;
+  return request.get(url).then(res => res.body)
+}
 
 export const resolvers = {
   Query: {
@@ -120,6 +153,12 @@ export const resolvers = {
       return loaders.datasetByKey.load(constituentKey).then(data => data.title)
     },
   },
+  TaxonSearchResult: {
+    facet: (parent) => ({_query: parent._query})
+  },
+  TaxonFacet: {
+    rank: getTaxonFacet('rank'),
+  },
   TaxonBreakdown: {
     taxon: ({name}, params, {loaders}) => loaders.taxonByKey.load(name),
     occurrences: (parent, params, context={}) => {
@@ -127,16 +166,3 @@ export const resolvers = {
     }
   }
 };
-
-export const taxonByKey = key => request.get(`${gbifApi}/species/${key}`).then((res) => res.body);
-export const formatedScientificNameByKey = key => request.get(`http://www.gbif.org/api/species/${key}/name`).then((res) => res.body.n);
-
-export const taxonSearch = (params) => {
-  const url = `${gbifApi}/species/search?${queryString.stringify(params)}`;
-  return request.get(url).then(res => ({...res.body, _query: params}))
-}
-
-export const checklistRoots = (key, params) => {
-  const url = `${gbifApi}/species/root/${key}?${queryString.stringify(params)}`;
-  return request.get(url).then(res => res.body)
-}

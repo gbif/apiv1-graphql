@@ -15,6 +15,7 @@ import { typeDef as Identifier } from './types/misc/identifier';
 import { typeDef as Endpoint } from './types/misc/endpoint';
 import { typeDef as MachineTag } from './types/misc/machineTag';
 import { typeDef as Tag } from './types/misc/tag';
+import { typeDef as Comment } from './types/misc/comment';
 import { enumTypeDefs } from './types/enums';
 
 async function setupServer() {
@@ -48,7 +49,7 @@ async function setupServer() {
   })
 
   const server = new ApolloServer({
-    typeDefs: [typeDefs, Occurrence, Dataset, Taxon, TaxonSubTypes, Organization, Contact, Identifier, Endpoint, MachineTag, Tag],
+    typeDefs: [typeDefs, Occurrence, Dataset, Taxon, TaxonSubTypes, Organization, Contact, Identifier, Endpoint, MachineTag, Tag, Comment],
     resolvers: merge(resolvers, occurrenceResolvers, datasetResolvers, taxonResolvers, taxonSubTypesResolvers, organizationResolvers),
     context: () => ({
       loaders: getLoaders()

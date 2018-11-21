@@ -10,6 +10,34 @@ export const typeDef = gql`
   }
 
   type Organization {
+    abbreviation: String
+    address: [String]
+    city: String
+    comments: [Comment]
+    contacts: [Contact]
+    country: Country
+    created: DateTime
+    createdBy: String
+    description: String
+    email: [JSON]
+    endorsementApproved: Boolean
+    endorsingNodeKey: ID
+    endpoints: [Endpoint]
+    homepage: [URL]
+    identifiers: [Identifier]
+    key: ID!
+    language: Language
+    latitude: Float
+    logoUrl: URL
+    longitude: Int
+    machineTags: [MachineTag]
+    modified: DateTime
+    modifiedBy: String
+    numPublishedDatasets: Int
+    phone: [String]
+    postalCode: String
+    province: String
+    tags: [Tag]
     title: String
   }
 
