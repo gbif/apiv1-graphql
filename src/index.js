@@ -1,3 +1,5 @@
+import commandLineArgs from 'command-line-args'
+import { cliOptions } from './cliOptions'
 import { ApolloServer, gql } from 'apollo-server'
 import { merge } from 'lodash'
 import DataLoader from "dataloader";
@@ -17,6 +19,8 @@ import { typeDef as MachineTag } from './types/misc/machineTag';
 import { typeDef as Tag } from './types/misc/tag';
 import { typeDef as Comment } from './types/misc/comment';
 import { enumTypeDefs } from './types/enums';
+
+const options = commandLineArgs(cliOptions)
 
 async function setupServer() {
   const enumsSchema = await enumTypeDefs();
@@ -58,7 +62,7 @@ async function setupServer() {
 
   // This `listen` method launches a web-server.  Existing apps
   // can utilize middleware options, which we'll discuss later.
-  server.listen().then(({ url }) => {
+  server.listen({ port: options.port || 4000 }).then(({ url }) => {
     console.log(`🚀  Server ready at ${url}`);
   });
 }

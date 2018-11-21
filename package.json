@@ -1,19 +1,23 @@
 {
-  "name": "apiv1-graphql",
+  "name": "gbif-graphql",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "A GraphQl server using GBIFs REST APIs",
+  "main": "src/index.js",
+  "private": true,
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "npx nodemon --exec babel-node src/index.js;"
+    "build": "npx babel src -d dist",
+    "serve": "npx nodemon --exec babel-node src/index.js;",
+    "start": "npm run build; node dist/index.js --port=4000"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "GBIF Secretariat <informatics@gbif.org>",
+  "license": "Apache 2.0",
   "dependencies": {
     "@okgrow/graphql-scalars": "^0.4.2",
     "agentkeepalive": "^4.0.0",
     "apollo-server": "^2.2.2",
+    "command-line-args": "^5.0.2",
     "dataloader": "^1.4.0",
     "graphql": "^14.0.2",
     "graphql-type-json": "^0.2.1",
@@ -23,6 +27,7 @@
     "requestretry": "^3.0.2"
   },
   "devDependencies": {
+    "@babel/cli": "^7.1.5",
     "@babel/core": "^7.1.6",
     "@babel/node": "^7.0.0",
     "@babel/preset-env": "^7.1.6",
