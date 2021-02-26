@@ -1,3 +1,7 @@
 {
-  "node": "14"
+  "node": "14",
+  "container": {
+    "node": "14",
+    "port": 4000
+  }
 }
