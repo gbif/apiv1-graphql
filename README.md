@@ -1,21 +1,8 @@
-# A GraphQL version of the GBIF REST APIs
+# GraphQL for GBIF API v1
+This project is under development
 
-A small test to see how we could benefit from running a GraphQL server at GBIF next to our REST APIs
+> We understand the importance of API stability and that is why we want to be clear on expectations. At this stage we cannot offer any commitment to long term (5yr), or even short term (6 month) stability. As we learn more about GraphQL we will establish a stable release. We expect this may be in 2022
 
-> Status: Only a subset of the APIs is implemented.
-
-## Attacks
-The GBIF APIs in general are open to attacks in the sense that you can bombard it with requests. But that becomes even easier with GraphQL as nested complex queries are easy to do without being malicious. Might be worth looking at https://blog.apollographql.com/securing-your-graphql-api-from-malicious-queries-16130a324a6b
-
-## Usage
-Developed using Node v10.13.0
-
-For development `npm run serve`
-
-For prod `npm start`
-
-Or if you need another port
-```
-npm run build
-node dist/index.js --port=4000
-```
+## Project structure
+Use node v14.15.0
+Run in dev (watch) with `npm start`.

@@ -1,70 +1,65 @@
-import commandLineArgs from 'command-line-args'
-import { cliOptions } from './cliOptions'
-import { ApolloServer, gql } from 'apollo-server'
-import { merge } from 'lodash'
-import DataLoader from "dataloader";
-import GraphQLJSON from 'graphql-type-json';
-import { URL, DateTime, EmailAddress } from '@okgrow/graphql-scalars';
+const express = require('express');
+const cors = require('cors');
+const compression = require('compression');
+const { ApolloServer } = require('apollo-server-express');
+const AbortController = require('abort-controller');
+const get = require('lodash/get');
+const config = require('./config');
+const health = require('./health')
 
-import { batchFaker } from './request'
-import { typeDef as Occurrence, resolvers as occurrenceResolvers, occurrenceByKey } from './types/occurrence.js';
-import { typeDef as Dataset, resolvers as datasetResolvers, datasetByKey } from './types/dataset.js';
-import { typeDef as Taxon, resolvers as taxonResolvers, taxonByKey, formatedScientificNameByKey } from './types/taxon.js';
-import { typeDef as TaxonSubTypes, resolvers as taxonSubTypesResolvers } from './types/taxonSubTypes';
-import { typeDef as Organization, resolvers as organizationResolvers, organizationByKey } from './types/organization.js';
-import { typeDef as Contact } from './types/misc/contact';
-import { typeDef as Identifier } from './types/misc/identifier';
-import { typeDef as Endpoint } from './types/misc/endpoint';
-import { typeDef as MachineTag } from './types/misc/machineTag';
-import { typeDef as Tag } from './types/misc/tag';
-import { typeDef as Comment } from './types/misc/comment';
-import { enumTypeDefs } from './types/enums';
+const bodyParser = require('body-parser');
 
-const options = commandLineArgs(cliOptions)
+// recommended in the apollo docs https://github.com/stems/graphql-depth-limit
+const depthLimit = require('graphql-depth-limit');
+// get the full schema of what types, enums, scalars and queries are available
+const { getSchema } = require('./typeDefs');
+// define how to resolve the various types, fields and queries
+const { resolvers } = require('./resolvers');
+// how to fetch the actual data and possible format/remap it to match the schemas
+const { api } = require('./dataSources');
 
-async function setupServer() {
-  const enumsSchema = await enumTypeDefs();
-
-  const typeDefs = gql`
-    scalar URL
-    scalar DateTime
-    scalar EmailAddress
-    scalar JSON
-
-    ${enumsSchema}
-
-    type Query {
-      _empty: String
-    }
-  `;
-
-  const resolvers = {
-    Query: {},
-    JSON: GraphQLJSON, // last resort type for unstructured data
-    URL, DateTime, EmailAddress, 
-  };
-
-  const getLoaders = () => ({
-    taxonByKey: new DataLoader(batchFaker(taxonByKey), {batch: false}), // our APIs do not support batch querying by IDs
-    datasetByKey: new DataLoader(batchFaker(datasetByKey), {batch: false}), // our APIs do not support batch querying by IDs
-    occurrenceByKey: new DataLoader(batchFaker(occurrenceByKey), {batch: false}), // our APIs do not support batch querying by IDs
-    organizationByKey: new DataLoader(batchFaker(organizationByKey), {batch: false}), // our APIs do not support batch querying by IDs
-    formatedScientificNameByKey: new DataLoader(batchFaker(formatedScientificNameByKey), {batch: false}), // our APIs do not support batch querying by IDs
-  })
-
+// we are doing this async as we need to load the various enumerations from the APIs
+// and generate the schema from those
+async function initializeServer() {
+  // this is async as we generate parts of the schema from the live enumeration API
+  const typeDefs = await getSchema();
   const server = new ApolloServer({
-    typeDefs: [typeDefs, Occurrence, Dataset, Taxon, TaxonSubTypes, Organization, Contact, Identifier, Endpoint, MachineTag, Tag, Comment],
-    resolvers: merge(resolvers, occurrenceResolvers, datasetResolvers, taxonResolvers, taxonSubTypesResolvers, organizationResolvers),
-    context: () => ({
-      loaders: getLoaders()
-    })
+    debug: config.debug,
+    context: async ({ req }) => {
+      // Add express context and a listener for aborted connections. Then data sources have a chance to cancel resources
+      // I haven't been able to find any examples of people doing anything with cancellation - which I find odd.
+      // Perhaps the overhead isn't worth it in most cases?
+      const controller = new AbortController();
+      req.on('close', function () {
+        controller.abort();
+      });
+
+      return { abortController: controller };
+    },
+    typeDefs,
+    resolvers,
+    dataSources: () => Object.keys(api).reduce((a, b) => (a[b] = new api[b](), a), {}), // Every request should have its own instance, see https://github.com/apollographql/apollo-server/issues/1562  
+    validationRules: [depthLimit(10)], // this likely have to be much higher than 6, but let us increase it as needed and not before
+    cacheControl: {
+      defaultMaxAge: 600,
+      scope: 'public',
+    },
   });
 
-  // This `listen` method launches a web-server.  Existing apps
-  // can utilize middleware options, which we'll discuss later.
-  server.listen({ port: options.port || 4000 }).then(({ url }) => {
-    console.log(`🚀  Server ready at ${url}`);
-  });
+  const app = express();
+  app.use(compression());
+  app.use(cors({
+    methods: 'GET,POST,OPTIONS',
+  }))
+  app.use(bodyParser.json());
+
+  app.get('/health', health);
+  
+  server.applyMiddleware({ app });
+
+  app.listen({ port: config.port }, () =>
+    console.log(`🚀 Server ready at http://localhost:${config.port}${server.graphqlPath}`)
+  );
 }
 
-setupServer();
+initializeServer();
