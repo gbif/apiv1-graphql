@@ -1,9 +1,6 @@
 {
   "name": "gbif-graphql",
   "version": "1.0.0",
-  "engines" : { 
-    "node" : ">=14.15.0"
-  },
   "description": "",
   "main": "src/index.js",
   "scripts": {
